@@ -235,34 +235,37 @@ def update_graph(reports, classes, view, encounter, stored_logs):
 
         colors = [class_settings[class_]['color'] for class_ in df['class']]
 
-        figure = {
-            'data': [{
-                "x": df.index,
-                "y": df.Avg,
-                "marker": dict(color=[color for color in colors]),
-                "error_y": dict(
+        figure = go.Figure()
+        figure.add_trace(
+            go.Bar(
+                x = df.index,
+                y = df.Avg,
+                customdata = df.Counts,
+                hovertemplate = "Damage: %{y}<br>Counts: %{customdata}<extra></extra>",
+                marker = dict(color=[color for color in colors]),
+                error_y = dict(
                     type = 'data',
                     array = df['std'],
                     thickness = 1.5,
                     width = 3,
-                ),
-                "type": 'bar',
-            }],
-            'layout': go.Layout(
-                template = 'plotly_dark',
-                paper_bgcolor = 'rgba(0, 0, 0, 0)',
-                plot_bgcolor = 'rgba(0, 0, 0, 0)',
-                margin = {'b': 20},
-                bargap = 0.3,
-                hovermode = 'x',
-                autosize = True,
-                title = {
-                    'text': f'Percentage of total {view}',
-                    'font': {'color': 'white'},
-                    'x': 0.5
-                },
+                )
             )
-        }
+        )
+
+        figure.update_layout(
+            template = 'plotly_dark',
+            paper_bgcolor = 'rgba(0, 0, 0, 0)',
+            plot_bgcolor = 'rgba(0, 0, 0, 0)',
+            margin = {'b': 20},
+            bargap = 0.3,
+            hovermode = 'x',
+            autosize = True,
+            title = {
+                'text': f'Percentage of total {view}',
+                'font': {'color': 'white'},
+                'x': 0.5
+            }
+        )
 
         logger.info("Graph updated.")
         return dcc.Graph(id='test', figure=figure), json.dumps(stored_logs)
