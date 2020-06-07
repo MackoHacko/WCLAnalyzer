@@ -1,10 +1,12 @@
 import pandas as pd
 from datetime import datetime
 from loggers.logger import Logger
+from functools import wraps
 
 # Initialize logger
 logger = Logger().getLogger(__file__)
 
+THRESHOLD_PERCENTAGE = 0.10
 
 def average_logs(logs):
     done_dfs = []
@@ -44,3 +46,7 @@ def parse_users(users):
     for User, user_info in users.items():
         user_dict[user_info["username"]] = user_info["password"]
     return user_dict
+
+def remove_irrelevant_roles(df: pd.DataFrame) -> pd.DataFrame:
+    logger.info(f"Removing players with avg less than {THRESHOLD_PERCENTAGE} of max.")
+    return df.query(f'Avg > Avg.max()*{THRESHOLD_PERCENTAGE}')

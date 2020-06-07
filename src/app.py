@@ -12,7 +12,7 @@ from dotenv import load_dotenv, find_dotenv
 from client import WCLClient
 from divs import reports_search_div, reports_select_div
 from loggers.logger import Logger
-from utils import average_logs, parse_users
+from utils import average_logs, parse_users, remove_irrelevant_roles
 
 # Load environment variables
 load_dotenv(find_dotenv())
@@ -231,16 +231,18 @@ def update_graph(reports, classes, view, encounter, stored_logs):
             True if class_ in classes else False for class_ in df['class']
         ] if classes else [True] * len(df)
 
+        df = df[class_index].pipe(remove_irrelevant_roles)
+
         colors = [class_settings[class_]['color'] for class_ in df['class']]
 
         figure = {
             'data': [{
-                "x": df.index[class_index],
-                "y": df.Avg[class_index],
-                "marker": dict(color=[i for (i, v) in zip(colors, class_index) if v]),
+                "x": df.index,
+                "y": df.Avg,
+                "marker": dict(color=[color for color in colors]),
                 "error_y": dict(
                     type = 'data',
-                    array = df['std'][class_index],
+                    array = df['std'],
                     thickness = 1.5,
                     width = 3,
                 ),
