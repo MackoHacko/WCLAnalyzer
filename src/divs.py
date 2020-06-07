@@ -74,36 +74,6 @@ guildZone_div = html.Div(
     ]
 )
 
-date_div = html.Div(
-    className='row',
-    children=[
-        html.Div(
-            className='leftblock',
-            children=[
-                dcc.DatePickerSingle(
-                    id='date1',
-                    initial_visible_month=dt.today(),
-                    min_date_allowed=dt(2019, 8, 26),
-                    max_date_allowed=dt.today(),
-                    placeholder='From Date',
-                )
-            ]
-        ),
-        html.Div(
-            className='rightblock',
-            children=[
-                dcc.DatePickerSingle(
-                    id='date2',
-                    initial_visible_month=dt.today(),
-                    min_date_allowed=dt(2019, 8, 26),
-                    max_date_allowed=dt.today(),
-                    placeholder='To Date'
-                )
-            ]
-        )
-    ]
-)
-
 reports_search_div = html.Div(
     id='reportsform',
     children=[
@@ -113,7 +83,6 @@ reports_search_div = html.Div(
                 html.P('Tool for averaging more than two logs.'),
                 serverRegion_div,
                 guildZone_div,
-                date_div,
                 html.Br(),
                 html.Button(
                     'submit',

@@ -89,8 +89,6 @@ def set_get_reports_callback(app):
             State('regionselect', 'value'),
             State('guildinput', 'value'),
             State('zoneselect', 'value'),
-            State('date1', 'date'),
-            State('date2', 'date'),
             State('memory-reports', 'data')
         ]
     )
@@ -123,8 +121,6 @@ def get_reports(
     region,
     guild,
     zone,
-    date1,
-    date2,
     stored_reports
 ):
     reports = []
