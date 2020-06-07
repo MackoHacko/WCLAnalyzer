@@ -211,7 +211,7 @@ def update_graph(reports, classes, view, encounter, stored_logs):
             log = client.get_log(
                 view = view,
                 log_id = report_id,
-                end = '200000000',
+                end = loaded_report['end'] - loaded_report['start'],
                 encounter = encounter
             )
 
