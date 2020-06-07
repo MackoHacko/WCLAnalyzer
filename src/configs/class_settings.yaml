@@ -1,0 +1,27 @@
+Rogue:
+  color: gold
+
+Warlock:
+  color: rebeccapurple
+
+Warrior:
+  color: saddlebrown
+
+Mage:
+  color: deepskyblue
+
+Hunter:
+  color: olive
+
+Shaman:
+  color: royalblue
+
+Paladin:
+  color: palevioletred
+
+Priest:
+  color: white
+
+Druid:
+  color: chocolate
+

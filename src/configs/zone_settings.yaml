@@ -1,0 +1,120 @@
+MC:
+  id: 1000
+  encounters:
+    - id: ''
+      name: Encounters + Trash
+
+    - id: 0
+      name: Trash
+
+    - id: 663
+      name: Lucifron
+
+    - id: 664
+      name: Magmadar
+
+    - id: 665
+      name: Gehennas
+
+    - id: 667
+      name: Shazzrah
+
+    - id: 668
+      name: Geddon
+
+    - id: 669
+      name: Sulfuron
+
+    - id: 670
+      name: Golemagg
+
+    - id: 671
+      name: Majordomo
+
+    - id: 672
+      name: Ragnaros
+
+Ony:
+  id: 1001
+  encounters:
+    - id: ''
+      name: Encounters + Trash
+
+    - id: 0
+      name: Trash
+
+    - id: 1084
+      name: Onyxia
+
+BWL:
+  id: 1002
+  encounters:
+    - id: ''
+      name: Encounters + Trash
+
+    - id: 0
+      name: Trash
+
+    - id: 610
+      name: Razorgore
+
+    - id: 611
+      name: Vaelastrasz
+
+    - id: 612
+      name: Razorgore
+
+    - id: 613
+      name: Firemaw
+
+    - id: 614
+      name: Ebonroc
+
+    - id: 615
+      name: Flamegor
+
+    - id: 616
+      name: Chromaggus
+
+    - id: 617
+      name: Nefarian
+
+ZG:
+  id: 1003
+  encounters:
+    - id: ''
+      name: Encounters + Trash
+
+    - id: 784
+      name: Venoxis
+
+    - id: 785
+      name: Jeklik
+
+    - id: 786
+      name: Mar'li
+
+    - id: 787
+      name: Mandokir
+
+    - id: 788
+      name: Madness
+
+    - id: 789
+      name: Thekal
+
+    - id: 790
+      name: Gahz'ranka
+
+    - id: 791
+      name: Arlokk
+
+    - id: 792
+      name: Jin'do
+
+    - id: 793
+      name: Hakkar
+
+    - id: 794
+      name: Hakkar (Hard)
+      
