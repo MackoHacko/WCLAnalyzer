@@ -78,7 +78,9 @@ def set_get_reports_callback(app):
             Output('reportselect', 'style'),
             Output('reportdropdown', 'options'),
             Output('encounterdropdown', 'options'),
-            Output('memory-reports', 'data')
+            Output('memory-reports', 'data'),
+            Output('confirm', 'displayed'),
+            Output('confirm', 'message')
         ],
         [
             Input('submit-val', 'n_clicks'),
@@ -123,8 +125,14 @@ def get_reports(
     zone,
     stored_reports
 ):
-    reports = []
+    report_options = []
+    new_reports = []
     encounters = []
+    error = False
+    error_msg = ''
+
+    if not stored_reports:
+        stored_reports = []
 
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -134,34 +142,43 @@ def get_reports(
 
     if button_id == 'submit-val':
 
-        if not stored_reports:
+        if not any(report['guild'] == guild for report in stored_reports):
 
             logger.info("Fetching reports..")
             t0 = time.time()
-            stored_reports = client.get_reports(guild, server, region, zone)
+            new_reports = client.get_reports(guild, server, region, zone)
             t1 = time.time()
             logger.info('Done. API call for fetching reports took {} s.'.format(t1 - t0))
 
-        if zone:
-            # TODO Rework the zones config to not have to pupulate encounters like this
-            zone_name = ''
-            for name in zones.keys():
-                if zones[name]['id'] == zone:
-                    zone_name = name
+            if not new_reports:
+                error = True
+                error_msg = 'Invalid guild name/server/region specified.'
 
-            encounters = [
-                {'label': encounter['name'], 'value': encounter['id']}
-                for encounter in zones[zone_name]['encounters']
+        if not error:
+            stored_reports.extend(new_reports)
+            form_style = {'display': 'none'}
+            select_style = {'display': 'block'}
+            report_options = [
+                report.copy() for report in stored_reports 
+                if report['zone'] == zone and report['guild'] == guild
+                or not zone and report['guild'] == guild
             ]
 
-        form_style = {'display': 'none'}
-        select_style = {'display': 'block'}
+            for report_option in report_options:
+                report_option.pop('zone', None)
+                report_option.pop('guild', None)
 
-        logger.info("Displaying report selections.")
+            if zone:
+                # TODO Rework the zones config to not have to pupulate encounters like this
+                zone_name = ''
+                for name in zones.keys():
+                    if zones[name]['id'] == zone:
+                        zone_name = name
 
-        reports = [report.copy() for report in stored_reports if report['zone'] == zone or not zone]
-        for report in reports:
-            report.pop('zone', None)
+                encounters = [
+                    {'label': encounter['name'], 'value': encounter['id']}
+                    for encounter in zones[zone_name]['encounters']
+                ]
 
     elif button_id == 'back':
         form_style = {'display': 'block'}
@@ -173,7 +190,7 @@ def get_reports(
 
     logger.debug(f"Currently stored reports: {stored_reports}")
 
-    return form_style, select_style, reports, encounters, stored_reports
+    return form_style, select_style, report_options, encounters, stored_reports, error, error_msg
 
 
 @set_update_graph_callback(app)

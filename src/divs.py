@@ -82,6 +82,9 @@ reports_search_div = html.Div(
     children=[
         html.Div(
             children=[
+                dcc.ConfirmDialog(
+                    id='confirm',
+                ),
                 html.H2('Log-Analyzer'),
                 html.P('Tool for averaging more than two logs.'),
                 serverRegion_div,

@@ -33,28 +33,34 @@ class WCLClient():
     def __add_api_key(self, url: str):
         return furl(url).add({'api_key': API_KEY})
 
-    def __parse_reports_response(self, response, zone):
+    def __parse_reports_response(self, response, zone, guild):
         try:
+            options = []
             reports = response.json()
             try:
-                options = [
-                    {
-                        'label': report['title'],
-                        'value': json.dumps(report),
-                        'zone': report['zone']
-                    } for report in reports
-                ]
-                return options
-            except NameError as e:
+                options.extend(
+                    [
+                        {
+                            'label': report['title'],
+                            'value': json.dumps(report),
+                            'zone': report['zone'],
+                            'guild': guild
+                        } for report in reports
+                    ]
+                )
+                pass
+            except (NameError, TypeError):
                 self.logger.error(
                     f"Got status code: {reports.get('status', None)}. Response: {reports}"
                 )
-                raise e
-        except JSONDecodeError as e:
+                pass
+        except JSONDecodeError:
             self.logger.error(
                 f"Couldn't parse response as json: '{response.text}'"
             )
-            raise e
+            pass
+        finally:
+            return options
 
     def __parse_log_response(self, response, view, encounter):
         try:
@@ -89,7 +95,7 @@ class WCLClient():
 
         response = requests.get(url=url, verify=True)
 
-        return self.__parse_reports_response(response, zone)
+        return self.__parse_reports_response(response, zone, guild)
 
     def get_log(
         self,
