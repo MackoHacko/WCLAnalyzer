@@ -30,7 +30,8 @@ serverRegion_div = html.Div(
                     type='text',
                     placeholder='Server',
                     id='serverinput',
-                    list='serverlist'
+                    list='serverlist',
+                    required = True
                 )
             ]
         ),
@@ -41,7 +42,8 @@ serverRegion_div = html.Div(
                     id='regionselect',
                     options=[{'label': 'EU', 'value': 'EU'}],
                     value = 'EU',
-                    placeholder='Region'
+                    placeholder='Region',
+                    clearable=False
                 )
             ]
         )
@@ -57,7 +59,8 @@ guildZone_div = html.Div(
                 dcc.Input(
                     type='text',
                     placeholder='Guild',
-                    id='guildinput'
+                    id='guildinput',
+                    required = True
                 )
             ]
         ),
