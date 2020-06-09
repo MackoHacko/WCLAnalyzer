@@ -470,6 +470,11 @@ label > .label-body {
   margin-left: 0.5rem;
   font-weight: normal;
 }
+
+input[type="text"]:invalid {
+  outline: #0c102900;
+}
+
 /* Lists –––––––––––––––––––––––––––––––––––––––––––––––––– */
 ul {
   list-style: circle inside;
