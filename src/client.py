@@ -33,34 +33,28 @@ class WCLClient():
     def __add_api_key(self, url: str):
         return furl(url).add({'api_key': API_KEY})
 
-    def __parse_reports_response(self, response, zone, guild):
+    def __parse_reports_response(self, response):
         try:
-            options = []
             reports = response.json()
             try:
-                options.extend(
-                    [
-                        {
-                            'label': report['title'],
-                            'value': json.dumps(report),
-                            'zone': report['zone'],
-                            'guild': guild
-                        } for report in reports
-                    ]
-                )
-                pass
-            except (NameError, TypeError):
+                options = [
+                    {
+                        'label': report['title'],
+                        'value': json.dumps(report),
+                        'zone': report['zone']
+                    } for report in reports
+                ]
+                return options
+            except (NameError, TypeError) as e:
                 self.logger.error(
                     f"Got status code: {reports.get('status', None)}. Response: {reports}"
                 )
-                pass
-        except JSONDecodeError:
+                raise e
+        except JSONDecodeError as e:
             self.logger.error(
                 f"Couldn't parse response as json: '{response.text}'"
             )
-            pass
-        finally:
-            return options
+            raise e
 
     def __parse_log_response(self, response, view, encounter):
         try:
@@ -79,8 +73,7 @@ class WCLClient():
         self,
         guild: str,
         server: str,
-        region: str,
-        zone: str
+        region: str
     ):
 
         url = self.report_url.format(
@@ -95,7 +88,7 @@ class WCLClient():
 
         response = requests.get(url=url, verify=True)
 
-        return self.__parse_reports_response(response, zone, guild)
+        return self.__parse_reports_response(response)
 
     def get_log(
         self,

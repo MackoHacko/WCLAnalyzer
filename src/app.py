@@ -6,6 +6,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objects as go
 import yaml
+from json.decoder import JSONDecodeError
 from dash.dependencies import Input, Output, State
 from dotenv import load_dotenv, find_dotenv
 
@@ -79,8 +80,7 @@ def set_get_reports_callback(app):
             Output('reportdropdown', 'options'),
             Output('encounterdropdown', 'options'),
             Output('memory-reports', 'data'),
-            Output('confirm', 'displayed'),
-            Output('confirm', 'message')
+            Output('confirm', 'displayed')
         ],
         [
             Input('submit-val', 'n_clicks'),
@@ -126,13 +126,11 @@ def get_reports(
     stored_reports
 ):
     report_options = []
-    new_reports = []
     encounters = []
-    error = False
-    error_msg = ''
+    get_reports_error = False
 
     if not stored_reports:
-        stored_reports = []
+        stored_reports = {}
 
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -142,26 +140,26 @@ def get_reports(
 
     if button_id == 'submit-val':
 
-        if not any(report['guild'] == guild for report in stored_reports):
+        reports_key = str((guild, server, region))
+
+        if not reports_key in stored_reports.keys():
 
             logger.info("Fetching reports..")
-            t0 = time.time()
-            new_reports = client.get_reports(guild, server, region, zone)
-            t1 = time.time()
-            logger.info('Done. API call for fetching reports took {} s.'.format(t1 - t0))
+            try:
+                t0 = time.time()
+                stored_reports[reports_key] = client.get_reports(guild, server, region)
+                t1 = time.time()
+                logger.info('Done. API call for fetching reports took {} s.'.format(t1 - t0))
+            except (JSONDecodeError, NameError, TypeError):
+                logger.exception('Could not get reports')
+                get_reports_error = True
 
-            if not new_reports:
-                error = True
-                error_msg = 'Invalid guild name/server/region specified.'
-
-        if not error:
-            stored_reports.extend(new_reports)
+        if not get_reports_error:
             form_style = {'display': 'none'}
             select_style = {'display': 'block'}
             report_options = [
-                report.copy() for report in stored_reports 
-                if report['zone'] == zone and report['guild'] == guild
-                or not zone and report['guild'] == guild
+                report.copy() for report in stored_reports[reports_key]
+                if report['zone'] == zone or not zone
             ]
 
             for report_option in report_options:
@@ -171,9 +169,10 @@ def get_reports(
             if zone:
                 # TODO Rework the zones config to not have to pupulate encounters like this
                 zone_name = ''
-                for name in zones.keys():
-                    if zones[name]['id'] == zone:
-                        zone_name = name
+                for key, val in zones.items():
+                    if val["id"] == zone:
+                        zone_name = key
+                        break
 
                 encounters = [
                     {'label': encounter['name'], 'value': encounter['id']}
@@ -190,7 +189,7 @@ def get_reports(
 
     logger.debug(f"Currently stored reports: {stored_reports}")
 
-    return form_style, select_style, report_options, encounters, stored_reports, error, error_msg
+    return form_style, select_style, report_options, encounters, stored_reports, get_reports_error
 
 
 @set_update_graph_callback(app)

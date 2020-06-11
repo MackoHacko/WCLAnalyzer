@@ -84,6 +84,7 @@ reports_search_div = html.Div(
             children=[
                 dcc.ConfirmDialog(
                     id='confirm',
+                    message = 'Invalid guild name/server/region specified.'
                 ),
                 html.H2('Log-Analyzer'),
                 html.P('Tool for averaging more than two logs.'),
