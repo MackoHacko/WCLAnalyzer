@@ -6,13 +6,14 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objects as go
 import yaml
+from json.decoder import JSONDecodeError
 from dash.dependencies import Input, Output, State
 from dotenv import load_dotenv, find_dotenv
 
 from client import WCLClient
 from divs import reports_search_div, reports_select_div
 from loggers.logger import Logger
-from utils import average_logs, parse_users, remove_irrelevant_roles
+from utils import average_logs, parse_users, remove_irrelevant_roles, get_reports_key
 
 # Load environment variables
 load_dotenv(find_dotenv())
@@ -78,7 +79,8 @@ def set_get_reports_callback(app):
             Output('reportselect', 'style'),
             Output('reportdropdown', 'options'),
             Output('encounterdropdown', 'options'),
-            Output('memory-reports', 'data')
+            Output('memory-reports', 'data'),
+            Output('confirm', 'displayed')
         ],
         [
             Input('submit-val', 'n_clicks'),
@@ -123,8 +125,12 @@ def get_reports(
     zone,
     stored_reports
 ):
-    reports = []
+    report_options = []
     encounters = []
+    get_reports_error = False
+
+    if not stored_reports:
+        stored_reports = {}
 
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -134,34 +140,44 @@ def get_reports(
 
     if button_id == 'submit-val':
 
-        if not stored_reports:
+        reports_key = get_reports_key(guild, server, region)
+
+        if reports_key not in stored_reports.keys():
 
             logger.info("Fetching reports..")
-            t0 = time.time()
-            stored_reports = client.get_reports(guild, server, region, zone)
-            t1 = time.time()
-            logger.info('Done. API call for fetching reports took {} s.'.format(t1 - t0))
+            try:
+                t0 = time.time()
+                stored_reports[reports_key] = client.get_reports(guild, server, region)
+                t1 = time.time()
+                logger.info('Done. API call for fetching reports took {} s.'.format(t1 - t0))
+            except (JSONDecodeError, NameError, TypeError):
+                logger.exception('Could not get reports')
+                get_reports_error = True
 
-        if zone:
-            # TODO Rework the zones config to not have to pupulate encounters like this
-            zone_name = ''
-            for name in zones.keys():
-                if zones[name]['id'] == zone:
-                    zone_name = name
-
-            encounters = [
-                {'label': encounter['name'], 'value': encounter['id']}
-                for encounter in zones[zone_name]['encounters']
-            ]
+                return form_style, select_style, report_options, encounters, stored_reports,\
+                get_reports_error
 
         form_style = {'display': 'none'}
         select_style = {'display': 'block'}
+        report_options = [
+            report.copy() for report in stored_reports[reports_key]
+            if report['zone'] == zone or not zone
+        ]
 
-        logger.info("Displaying report selections.")
+        for report_option in report_options:
+            report_option.pop('zone', None)
+            report_option.pop('guild', None)
 
-        reports = [report.copy() for report in stored_reports if report['zone'] == zone or not zone]
-        for report in reports:
-            report.pop('zone', None)
+        if zone:
+            for val in zones.values():
+                if val['id'] == zone:
+                    encounters = [
+                        {
+                            'label': encounter['name'],
+                            'value': encounter['id']
+                        } for encounter in val['encounters']
+                    ]
+                    break
 
     elif button_id == 'back':
         form_style = {'display': 'block'}
@@ -173,7 +189,7 @@ def get_reports(
 
     logger.debug(f"Currently stored reports: {stored_reports}")
 
-    return form_style, select_style, reports, encounters, stored_reports
+    return form_style, select_style, report_options, encounters, stored_reports, get_reports_error
 
 
 @set_update_graph_callback(app)

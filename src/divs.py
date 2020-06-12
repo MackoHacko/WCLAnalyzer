@@ -30,7 +30,8 @@ serverRegion_div = html.Div(
                     type='text',
                     placeholder='Server',
                     id='serverinput',
-                    list='serverlist'
+                    list='serverlist',
+                    required = True
                 )
             ]
         ),
@@ -41,7 +42,8 @@ serverRegion_div = html.Div(
                     id='regionselect',
                     options=[{'label': 'EU', 'value': 'EU'}],
                     value = 'EU',
-                    placeholder='Region'
+                    placeholder='Region',
+                    clearable=False
                 )
             ]
         )
@@ -57,7 +59,8 @@ guildZone_div = html.Div(
                 dcc.Input(
                     type='text',
                     placeholder='Guild',
-                    id='guildinput'
+                    id='guildinput',
+                    required = True
                 )
             ]
         ),
@@ -79,6 +82,10 @@ reports_search_div = html.Div(
     children=[
         html.Div(
             children=[
+                dcc.ConfirmDialog(
+                    id='confirm',
+                    message = 'Invalid guild name/server/region specified.'
+                ),
                 html.H2('Log-Analyzer'),
                 html.P('Tool for averaging more than two logs.'),
                 serverRegion_div,

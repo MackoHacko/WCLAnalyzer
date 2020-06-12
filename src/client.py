@@ -33,7 +33,7 @@ class WCLClient():
     def __add_api_key(self, url: str):
         return furl(url).add({'api_key': API_KEY})
 
-    def __parse_reports_response(self, response, zone):
+    def __parse_reports_response(self, response):
         try:
             reports = response.json()
             try:
@@ -45,7 +45,7 @@ class WCLClient():
                     } for report in reports
                 ]
                 return options
-            except NameError as e:
+            except (NameError, TypeError) as e:
                 self.logger.error(
                     f"Got status code: {reports.get('status', None)}. Response: {reports}"
                 )
@@ -73,8 +73,7 @@ class WCLClient():
         self,
         guild: str,
         server: str,
-        region: str,
-        zone: str
+        region: str
     ):
 
         url = self.report_url.format(
@@ -89,7 +88,7 @@ class WCLClient():
 
         response = requests.get(url=url, verify=True)
 
-        return self.__parse_reports_response(response, zone)
+        return self.__parse_reports_response(response)
 
     def get_log(
         self,
