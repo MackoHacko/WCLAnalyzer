@@ -1,7 +1,6 @@
 import yaml
 import dash_html_components as html
 import dash_core_components as dcc
-from datetime import datetime as dt
 from loggers.logger import Logger
 
 # Initialize logger
