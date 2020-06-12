@@ -13,7 +13,7 @@ from dotenv import load_dotenv, find_dotenv
 from client import WCLClient
 from divs import reports_search_div, reports_select_div
 from loggers.logger import Logger
-from utils import average_logs, parse_users, remove_irrelevant_roles
+from utils import average_logs, parse_users, remove_irrelevant_roles, get_reports_key
 
 # Load environment variables
 load_dotenv(find_dotenv())
@@ -140,9 +140,9 @@ def get_reports(
 
     if button_id == 'submit-val':
 
-        reports_key = str((guild, server, region))
+        reports_key = get_reports_key(guild, server, region)
 
-        if not reports_key in stored_reports.keys():
+        if reports_key not in stored_reports.keys():
 
             logger.info("Fetching reports..")
             try:
@@ -154,30 +154,30 @@ def get_reports(
                 logger.exception('Could not get reports')
                 get_reports_error = True
 
-        if not get_reports_error:
-            form_style = {'display': 'none'}
-            select_style = {'display': 'block'}
-            report_options = [
-                report.copy() for report in stored_reports[reports_key]
-                if report['zone'] == zone or not zone
-            ]
+                return form_style, select_style, report_options, encounters, stored_reports,\
+                get_reports_error
 
-            for report_option in report_options:
-                report_option.pop('zone', None)
-                report_option.pop('guild', None)
+        form_style = {'display': 'none'}
+        select_style = {'display': 'block'}
+        report_options = [
+            report.copy() for report in stored_reports[reports_key]
+            if report['zone'] == zone or not zone
+        ]
 
-            if zone:
-                # TODO Rework the zones config to not have to pupulate encounters like this
-                zone_name = ''
-                for key, val in zones.items():
-                    if val["id"] == zone:
-                        zone_name = key
-                        break
+        for report_option in report_options:
+            report_option.pop('zone', None)
+            report_option.pop('guild', None)
 
-                encounters = [
-                    {'label': encounter['name'], 'value': encounter['id']}
-                    for encounter in zones[zone_name]['encounters']
-                ]
+        if zone:
+            for val in zones.values():
+                if val['id'] == zone:
+                    encounters = [
+                        {
+                            'label': encounter['name'],
+                            'value': encounter['id']
+                        } for encounter in val['encounters']
+                    ]
+                    break
 
     elif button_id == 'back':
         form_style = {'display': 'block'}
