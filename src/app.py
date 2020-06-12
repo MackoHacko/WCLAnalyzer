@@ -10,7 +10,7 @@ from json.decoder import JSONDecodeError
 from dash.dependencies import Input, Output, State
 from dotenv import load_dotenv, find_dotenv
 
-from client import WCLClient
+from wcl_client import WCLClient
 from divs import reports_search_div, reports_select_div
 from loggers.logger import Logger
 from utils import average_logs, parse_users, remove_irrelevant_roles, get_reports_key

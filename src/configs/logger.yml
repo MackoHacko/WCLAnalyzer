@@ -28,7 +28,12 @@ loggers:
     handlers: 
       - console
     propagate: false
-  client:
+  wcl_client:
+    level: DEBUG
+    handlers:
+      - console
+    propagate: false
+  dbd_client:
     level: DEBUG
     handlers:
       - console
