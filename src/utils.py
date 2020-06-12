@@ -54,5 +54,6 @@ def remove_irrelevant_roles(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"Removing players with avg less than {THRESHOLD_PERCENTAGE} of max.")
     return df.query(f'Avg > Avg.max() * {THRESHOLD_PERCENTAGE}')
 
+
 def get_reports_key(guild: str, server: str, region: str) -> str:
     return f'<{guild}>-<{server}>-<{region}>'
