@@ -180,7 +180,7 @@ class DBDClient():
     def get_log(self, guild_id, report_id, encounter, log_type):
         return self.get_all_logs(
             guild_id
-        )[self.__get_log_name(report_id, encounter, log_type)]
+        )
 
 
 if __name__ == "__main__":

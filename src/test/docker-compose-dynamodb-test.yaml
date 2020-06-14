@@ -1,0 +1,7 @@
+version: '3.8'
+services:
+ dynamodb-local-test:
+   image: amazon/dynamodb-local:latest
+   container_name: dynamodb-local-test
+   ports:
+    - "8001:8000"
