@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from json.decoder import JSONDecodeError
 from pathlib import Path
 
@@ -107,8 +108,10 @@ class WCLClient():
             url = self.__add_api_key(url)
 
             self.logger.debug(f"Requesting reports from url: {url}")
-
+            t0 = time.time()
             response = requests.get(url=url, verify=True)
+            t1 = time.time()
+            self.logger.debug('Done. API call for fetching reports took {} s.'.format(t1 - t0))
 
             return self.__parse_reports_response(response)
 
@@ -148,8 +151,10 @@ class WCLClient():
             url = self.__add_api_key(url)
 
             self.logger.debug(f"Fetching logs from url: {url}")
-
+            t0 = time.time()
             response = requests.get(url=url, verify=True)
+            t1 = time.time()
+            self.logger.debug('Done API call for fetching logs. Took {} s.'.format(t1 - t0))
 
             return self.__parse_log_response(response, view, encounter)
 
