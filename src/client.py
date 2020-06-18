@@ -5,6 +5,7 @@ from json.decoder import JSONDecodeError
 import requests
 from furl import furl
 
+from cache import Cache
 from loggers.logger import Logger
 
 BASE_REPORT_URL = 'https://classic.warcraftlogs.com:443/' \
@@ -29,6 +30,7 @@ class WCLClient():
         self.log_url = base_log_url
         self.logger = Logger().getLogger(__file__)
         self.logger.info("Initialize WCLClient.")
+        self.__cache = Cache()
 
     def __add_api_key(self, url: str):
         return furl(url).add({'api_key': API_KEY})
@@ -75,20 +77,28 @@ class WCLClient():
         server: str,
         region: str
     ):
+        @self.__cache(ttl=60 * 10, limit=100)
+        def _get_reports(
+            guild: str,
+            server: str,
+            region: str
+        ):
 
-        url = self.report_url.format(
-            guild = guild,
-            server = server,
-            region = region
-        )
+            url = self.report_url.format(
+                guild = guild,
+                server = server,
+                region = region
+            )
 
-        url = self.__add_api_key(url)
+            url = self.__add_api_key(url)
 
-        self.logger.debug(f"Requesting reports from url: {url}")
+            self.logger.debug(f"Requesting reports from url: {url}")
 
-        response = requests.get(url=url, verify=True)
+            response = requests.get(url=url, verify=True)
 
-        return self.__parse_reports_response(response)
+            return self.__parse_reports_response(response)
+
+        return _get_reports(guild, server, region)
 
     def get_log(
         self,
@@ -97,18 +107,27 @@ class WCLClient():
         end: str,
         encounter: str
     ):
+        @self.__cache(ttl=60 * 10, limit=100)
+        def _get_log(
+            view: str,
+            log_id: str,
+            end: str,
+            encounter: str
+        ):
 
-        url = self.log_url.format(
-            view = view,
-            log_id = log_id,
-            end = end,
-            encounter = encounter
-        )
+            url = self.log_url.format(
+                view = view,
+                log_id = log_id,
+                end = end,
+                encounter = encounter
+            )
 
-        url = self.__add_api_key(url)
+            url = self.__add_api_key(url)
 
-        self.logger.debug(f"Fetching logs from url: {url}")
+            self.logger.debug(f"Fetching logs from url: {url}")
 
-        response = requests.get(url=url, verify=True)
+            response = requests.get(url=url, verify=True)
 
-        return self.__parse_log_response(response, view, encounter)
+            return self.__parse_log_response(response, view, encounter)
+
+        return _get_log(view, log_id, end, encounter)
