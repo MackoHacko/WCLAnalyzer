@@ -1,4 +1,4 @@
-import time
+from json import dumps
 
 from redis import StrictRedis
 from redis_cache import RedisCache
@@ -18,6 +18,11 @@ class Cache():
         self.__logger = Logger().getLogger(__file__)
         self.__logger.info("Initialize Cache.")
 
+    def key_exists(self, *args):
+        serialized_data = dumps([args[1:], {}])
+        key = f'rc:{args[0]}:{serialized_data}'
+        return self.__client.exists(key) >= 1
+
     def __call__(self, ttl=60 * 10, limit=100, namespace=None):
         return self.__cache.cache(ttl, limit, namespace)
 
@@ -28,9 +33,9 @@ if __name__ == "__main__":
 
     @cache(ttl=60 * 1, limit=10)
     def yeah_man(x, y):
-        time.sleep(3)
         return x + y
 
     for i in range(10):
-        for j in range(10):
-            print(yeah_man(i, j))
+        print(yeah_man(i, i))
+
+    print(cache.key_exists('__main__.yeah_man', 7, 7))
