@@ -13,7 +13,8 @@ class Cache():
         port: int = 6379
     ) -> None:
         self.__client = StrictRedis(host, port=port, decode_responses=True)
-        self.__client.config_set('maxmemory', '256mb')
+        self.__client.config_set('maxmemory', '600mb')
+        self.__client.config_set('maxmemory-policy', 'allkeys-lru')
         self.__cache = RedisCache(redis_client=self.__client)
         self.__logger = Logger().getLogger(__file__)
         self.__logger.info("Initialize Cache.")
@@ -23,19 +24,5 @@ class Cache():
         key = f'rc:{args[0]}:{serialized_data}'
         return self.__client.exists(key) >= 1
 
-    def __call__(self, ttl=60 * 10, limit=100, namespace=None):
+    def __call__(self, ttl=60 * 60 * 24, limit=500, namespace=None):
         return self.__cache.cache(ttl, limit, namespace)
-
-
-if __name__ == "__main__":
-    # connect to redis
-    cache = Cache()
-
-    @cache(ttl=60 * 1, limit=10)
-    def yeah_man(x, y):
-        return x + y
-
-    for i in range(10):
-        print(yeah_man(i, i))
-
-    print(cache.key_exists('__main__.yeah_man', 7, 7))
