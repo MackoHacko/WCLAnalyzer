@@ -155,7 +155,7 @@ def get_reports(
                 get_reports_error = True
 
                 return form_style, select_style, report_options, encounters, stored_reports,\
-                get_reports_error
+                    get_reports_error
 
         form_style = {'display': 'none'}
         select_style = {'display': 'block'}
