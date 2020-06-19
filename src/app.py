@@ -202,24 +202,24 @@ def update_graph(reports, classes, view, encounter):
         logger.info('Done calculating average for logs. Took {} s.'.format(t1 - t0))
 
         class_index = [
-            True if class_ in classes else False for class_ in df['class']
+            True if class_ in classes else False for class_ in df['_class']
         ] if classes else [True] * len(df)
 
         df = df[class_index].pipe(remove_irrelevant_roles)
 
-        colors = [class_settings[class_]['color'] for class_ in df['class']]
+        colors = [class_settings[class_]['color'] for class_ in df['_class']]
 
         figure = go.Figure()
         figure.add_trace(
             go.Bar(
                 x = df.index,
-                y = df.Avg,
-                customdata = df.Counts,
+                y = df._avg,
+                customdata = df._counts,
                 hovertemplate = "Damage: %{y}<br>Counts: %{customdata}<extra></extra>",
                 marker = dict(color=[color for color in colors]),
                 error_y = dict(
                     type = 'data',
-                    array = df['std'],
+                    array = df._std,
                     thickness = 1.5,
                     width = 3,
                 )

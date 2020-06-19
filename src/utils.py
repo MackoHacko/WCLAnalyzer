@@ -10,31 +10,29 @@ logger = Logger().getLogger(__file__)
 THRESHOLD_PERCENTAGE = 0.10
 
 
+def create_normalized_column(df, col_name):
+    df[f'norm_{col_name}'] = 100 * df[col_name] / df[col_name].sum()
+    return df
+
+
+def drop_rows_where_col_has_value(df, col_name, value):
+    df = df[df['type'] != 'Pet']
+    return df
+
+
 def average_logs(logs):
-    done_dfs = []
-    for log in logs:
-        df = pd.json_normalize(log, 'entries')
-        temp_df = df.loc[:, df.columns.intersection(
-            ['name', 'type', 'total', 'activeTime'])]
-        temp_df['total'] = 100 * temp_df['total'] / temp_df['total'].sum()
-        temp_df = temp_df[temp_df['type'] != 'Pet']
-        done_dfs.append(temp_df)
-    temp_df = pd.concat(done_dfs)
-
-    mean = temp_df.groupby(['name'])['total'].agg(lambda x: x.unique().mean())
-    std = temp_df.groupby(['name'])['total'].agg(lambda x: x.unique().std())
-    classes = temp_df.groupby(['name'])['type'].agg(lambda x: x.unique())
-    count = temp_df['name'].value_counts()
-
     return pd.concat(
         [
-            classes.rename('class'),
-            mean.rename('Avg'),
-            std.rename('std'),
-            count.rename('Counts')
-        ],
-        axis = 1
-    ).sort_values('Avg')
+            pd.json_normalize(log, 'entries')[['name', 'type', 'total']]
+            .pipe(drop_rows_where_col_has_value, col_name='type', value='Pet')
+            .pipe(create_normalized_column, col_name='total') for log in logs
+        ]
+    ).groupby(['name']).agg(
+        _std=('norm_total', lambda x: x.unique().std()), # just 'std' will use ddof = 1
+        _avg=('norm_total', 'mean'),
+        _counts=('name', 'size'),
+        _class=('type', 'max')
+    ).sort_values("_avg")
 
 
 # Date parameters need to be converted to milliseconds Unix format
@@ -52,7 +50,7 @@ def parse_users(users):
 
 def remove_irrelevant_roles(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"Removing players with avg less than {THRESHOLD_PERCENTAGE} of max.")
-    return df.query(f'Avg > Avg.max() * {THRESHOLD_PERCENTAGE}')
+    return df.query(f'_avg > _avg.max() * {THRESHOLD_PERCENTAGE}')
 
 
 def get_reports_key(guild: str, server: str, region: str) -> str:
