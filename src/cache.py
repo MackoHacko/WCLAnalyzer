@@ -24,5 +24,11 @@ class Cache():
         key = f'rc:{args[0]}:{serialized_data}'
         return self.__client.exists(key) >= 1
 
+    def get_all_keys(self):
+        return self.__client.keys()
+
+    def get_key_count(self):
+        return len(self.get_all_keys())
+
     def __call__(self, ttl=60 * 60 * 24, limit=500, namespace=None):
         return self.__cache.cache(ttl, limit, namespace)
