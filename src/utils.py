@@ -16,19 +16,19 @@ def create_normalized_column(df, col_name):
 
 
 def drop_rows_where_col_has_value(df, col_name, value):
-    df = df[df['type'] != 'Pet']
+    df = df[df[col_name] != value]
     return df
 
 
 def average_logs(logs):
     return pd.concat(
         [
-            pd.json_normalize(log, 'entries')[['name', 'type', 'total']]
+            pd.DataFrame(log["entries"])[['name', 'type', 'total']]
             .pipe(drop_rows_where_col_has_value, col_name='type', value='Pet')
             .pipe(create_normalized_column, col_name='total') for log in logs
         ]
     ).groupby(['name']).agg(
-        _std=('norm_total', lambda x: x.unique().std()), # just 'std' will use ddof = 1
+        _std=('norm_total', lambda x: x.unique().std()),  # just 'std' will use ddof = 1
         _avg=('norm_total', 'mean'),
         _counts=('name', 'size'),
         _class=('type', 'max')
