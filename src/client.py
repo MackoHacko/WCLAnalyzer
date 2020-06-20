@@ -1,10 +1,13 @@
 import json
 import os
+import time
 from json.decoder import JSONDecodeError
+from pathlib import Path
 
 import requests
 from furl import furl
 
+from cache import Cache
 from loggers.logger import Logger
 
 BASE_REPORT_URL = 'https://classic.warcraftlogs.com:443/' \
@@ -29,6 +32,10 @@ class WCLClient():
         self.log_url = base_log_url
         self.logger = Logger().getLogger(__file__)
         self.logger.info("Initialize WCLClient.")
+        self.__cache = Cache()
+
+    def __get_cache_key(self, func_name: str) -> str:
+        return f"{Path(__file__).stem}.{func_name}"
 
     def __add_api_key(self, url: str):
         return furl(url).add({'api_key': API_KEY})
@@ -75,20 +82,40 @@ class WCLClient():
         server: str,
         region: str
     ):
+        if self.__cache.key_exists(
+            self.__get_cache_key(func_name = "_get_reports"),
+            guild,
+            server,
+            region
+        ):
+            self.logger.info(
+                f"Reports for {guild}-{server}-{region} already exists, fetching from cache."
+            )
 
-        url = self.report_url.format(
-            guild = guild,
-            server = server,
-            region = region
-        )
+        @self.__cache()
+        def _get_reports(
+            guild: str,
+            server: str,
+            region: str
+        ):
 
-        url = self.__add_api_key(url)
+            url = self.report_url.format(
+                guild = guild,
+                server = server,
+                region = region
+            )
 
-        self.logger.debug(f"Requesting reports from url: {url}")
+            url = self.__add_api_key(url)
 
-        response = requests.get(url=url, verify=True)
+            self.logger.debug(f"Requesting reports from url: {url}")
+            t0 = time.time()
+            response = requests.get(url=url, verify=True)
+            t1 = time.time()
+            self.logger.debug('Done. API call for fetching reports took {} s.'.format(t1 - t0))
 
-        return self.__parse_reports_response(response)
+            return self.__parse_reports_response(response)
+
+        return _get_reports(guild, server, region)
 
     def get_log(
         self,
@@ -97,18 +124,38 @@ class WCLClient():
         end: str,
         encounter: str
     ):
+        if self.__cache.key_exists(
+            self.__get_cache_key(func_name = "_get_log"),
+            view,
+            log_id,
+            end,
+            encounter
+        ):
+            self.logger.info(f"Log {log_id} already exists, fetching from cache.")
 
-        url = self.log_url.format(
-            view = view,
-            log_id = log_id,
-            end = end,
-            encounter = encounter
-        )
+        @self.__cache()
+        def _get_log(
+            view: str,
+            log_id: str,
+            end: str,
+            encounter: str
+        ):
 
-        url = self.__add_api_key(url)
+            url = self.log_url.format(
+                view = view,
+                log_id = log_id,
+                end = end,
+                encounter = encounter
+            )
 
-        self.logger.debug(f"Fetching logs from url: {url}")
+            url = self.__add_api_key(url)
 
-        response = requests.get(url=url, verify=True)
+            self.logger.debug(f"Fetching logs from url: {url}")
+            t0 = time.time()
+            response = requests.get(url=url, verify=True)
+            t1 = time.time()
+            self.logger.debug('Done API call for fetching logs. Took {} s.'.format(t1 - t0))
 
-        return self.__parse_log_response(response, view, encounter)
+            return self.__parse_log_response(response, view, encounter)
+
+        return _get_log(view, log_id, end, encounter)

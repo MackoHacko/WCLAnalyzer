@@ -33,6 +33,11 @@ loggers:
     handlers:
       - console
     propagate: false
+  cache_client:
+    level: DEBUG
+    handlers:
+      - console
+    propagate: false
 root:
   level: INFO
   handlers:

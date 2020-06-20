@@ -55,8 +55,6 @@ def set_app_layout(app):
     app.layout = html.Div(
         children=[
             html.Div([
-                dcc.Store(id='memory-reports'),
-                dcc.Store(id='memory-logs'),
                 html.Div(
                     className='four columns div-user-controls',
                     id='leftcol',
@@ -79,7 +77,6 @@ def set_get_reports_callback(app):
             Output('reportselect', 'style'),
             Output('reportdropdown', 'options'),
             Output('encounterdropdown', 'options'),
-            Output('memory-reports', 'data'),
             Output('confirm', 'displayed')
         ],
         [
@@ -90,8 +87,7 @@ def set_get_reports_callback(app):
             State('serverinput', 'value'),
             State('regionselect', 'value'),
             State('guildinput', 'value'),
-            State('zoneselect', 'value'),
-            State('memory-reports', 'data')
+            State('zoneselect', 'value')
         ]
     )
 
@@ -99,18 +95,12 @@ def set_get_reports_callback(app):
 def set_update_graph_callback(app):
     logger.info("Set callback for update_graph.")
     return app.callback(
-        [
-            Output('graphdiv', 'children'),
-            Output('memory-logs', 'data'),
-        ],
+        Output('graphdiv', 'children'),
         [
             Input('reportdropdown', 'value'),
             Input('classdropdown', 'value'),
             Input('viewdropdown', 'value'),
             Input('encounterdropdown', 'value')
-        ],
-        [
-            State('memory-logs', 'data')
         ]
     )
 
@@ -122,15 +112,11 @@ def get_reports(
     server,
     region,
     guild,
-    zone,
-    stored_reports
+    zone
 ):
     report_options = []
     encounters = []
     get_reports_error = False
-
-    if not stored_reports:
-        stored_reports = {}
 
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -139,28 +125,19 @@ def get_reports(
     select_style = {'display': 'none'}
 
     if button_id == 'submit-val':
+        logger.info("Fetching reports..")
+        try:
+            reports = client.get_reports(guild, server, region)
+        except (JSONDecodeError, NameError, TypeError):
+            logger.exception('Could not get reports')
+            get_reports_error = True
 
-        reports_key = get_reports_key(guild, server, region)
-
-        if reports_key not in stored_reports.keys():
-
-            logger.info("Fetching reports..")
-            try:
-                t0 = time.time()
-                stored_reports[reports_key] = client.get_reports(guild, server, region)
-                t1 = time.time()
-                logger.info('Done. API call for fetching reports took {} s.'.format(t1 - t0))
-            except (JSONDecodeError, NameError, TypeError):
-                logger.exception('Could not get reports')
-                get_reports_error = True
-
-                return form_style, select_style, report_options, encounters, stored_reports,\
-                get_reports_error
+            return form_style, select_style, report_options, encounters, get_reports_error
 
         form_style = {'display': 'none'}
         select_style = {'display': 'block'}
         report_options = [
-            report.copy() for report in stored_reports[reports_key]
+            report.copy() for report in reports
             if report['zone'] == zone or not zone
         ]
 
@@ -187,38 +164,24 @@ def get_reports(
     else:
         logger.info("Displaying report options.")
 
-    logger.debug(f"Currently stored reports: {stored_reports}")
-
-    return form_style, select_style, report_options, encounters, stored_reports, get_reports_error
+    return form_style, select_style, report_options, encounters, get_reports_error
 
 
 @set_update_graph_callback(app)
-def update_graph(reports, classes, view, encounter, stored_logs):
-
-    if stored_logs:
-        stored_logs = json.loads(stored_logs)
-    else:
-        stored_logs = {}
+def update_graph(reports, classes, view, encounter):
 
     trigger = dash.callback_context.triggered[0]['prop_id'].split('.')[0]
     update_triggers = {'reportdropdown', 'classdropdown', 'viewdropdown', 'encounterdropdown'}
 
     if all([reports, view, trigger in update_triggers]):
-        current_logs = []
 
         logger.info("Fetching logs..")
         t0 = time.time()
+        logs = []
         for report in reports:
 
             loaded_report = json.loads(report)
             report_id = loaded_report['id']
-            log_key = str((report_id, encounter, view))
-
-            if log_key in stored_logs.keys():
-                logger.info(f"{view} log for encounter: {encounter} with log_id: " +
-                            f"{report_id} already fetched.")
-                current_logs.append(stored_logs[log_key])
-                continue
 
             log = client.get_log(
                 view = view,
@@ -227,37 +190,36 @@ def update_graph(reports, classes, view, encounter, stored_logs):
                 encounter = encounter
             )
 
-            stored_logs[log_key] = log
-            current_logs.append(log)
+            logs.append(log)
 
         t1 = time.time()
-        logger.info('Done. API call for fetching logs took {} s.'.format(t1 - t0))
+        logger.info('Done fetching logs. Took {} s.'.format(t1 - t0))
 
         logger.info("Calculating average..")
         t0 = time.time()
-        df = average_logs(current_logs)
+        df = average_logs(logs)
         t1 = time.time()
-        logger.info('Done.Calculating average for logs took {} s.'.format(t1 - t0))
+        logger.info('Done calculating average for logs. Took {} s.'.format(t1 - t0))
 
         class_index = [
-            True if class_ in classes else False for class_ in df['class']
+            True if class_ in classes else False for class_ in df['_class']
         ] if classes else [True] * len(df)
 
         df = df[class_index].pipe(remove_irrelevant_roles)
 
-        colors = [class_settings[class_]['color'] for class_ in df['class']]
+        colors = [class_settings[class_]['color'] for class_ in df['_class']]
 
         figure = go.Figure()
         figure.add_trace(
             go.Bar(
                 x = df.index,
-                y = df.Avg,
-                customdata = df.Counts,
+                y = df._avg,
+                customdata = df._counts,
                 hovertemplate = "Damage: %{y}<br>Counts: %{customdata}<extra></extra>",
                 marker = dict(color=[color for color in colors]),
                 error_y = dict(
                     type = 'data',
-                    array = df['std'],
+                    array = df._std,
                     thickness = 1.5,
                     width = 3,
                 )
@@ -280,8 +242,8 @@ def update_graph(reports, classes, view, encounter, stored_logs):
         )
 
         logger.info("Graph updated.")
-        return dcc.Graph(id='test', figure=figure), json.dumps(stored_logs)
-    return None, json.dumps(stored_logs)
+        return dcc.Graph(id='test', figure=figure)
+    return
 
 
 set_app_layout(app)
