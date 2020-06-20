@@ -30,5 +30,5 @@ class Cache():
     def get_key_count(self):
         return len(self.get_all_keys())
 
-    def __call__(self, ttl=60 * 60 * 24, limit=500, namespace=None):
+    def __call__(self, ttl=60 * 60 * 24 * 7, limit=5000, namespace=None):
         return self.__cache.cache(ttl, limit, namespace)

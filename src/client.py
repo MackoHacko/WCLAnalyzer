@@ -90,7 +90,7 @@ class WCLClient():
                 f"Reports for {guild}-{server}-{region} already exists, fetching from cache."
             )
 
-        @self.__cache()
+        @self.__cache(ttl = 60 * 5)
         def _get_reports(
             guild: str,
             server: str,
