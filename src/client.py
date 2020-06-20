@@ -36,7 +36,7 @@ class WCLClient():
         return f"{Path(__file__).stem}.{func_name}"
 
     def __add_api_key(self, url: str):
-        return furl(url).add({'api_key': self.api_key})
+        return furl(url).add({'api_key': self.__api_key})
 
     def __parse_reports_response(self, response):
         try:
