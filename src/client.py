@@ -17,19 +17,17 @@ BASE_LOG_URL = 'https://classic.warcraftlogs.com:443' \
                '/v1/report/tables/{view}/{log_id}' \
                '?end={end}&encounter={encounter}'
 
-API_KEY = os.getenv("API_KEY")
-
 
 class WCLClient():
 
     def __init__(
         self,
         base_report_url: str = BASE_REPORT_URL,
-        base_log_url: str = BASE_LOG_URL,
-        api_key: str = API_KEY
+        base_log_url: str = BASE_LOG_URL
     ) -> None:
         self.report_url = base_report_url
         self.log_url = base_log_url
+        self.__api_key = os.getenv("API_KEY")
         self.logger = Logger().getLogger(__file__)
         self.logger.info("Initialize WCLClient.")
         self.__cache = Cache()
@@ -38,7 +36,7 @@ class WCLClient():
         return f"{Path(__file__).stem}.{func_name}"
 
     def __add_api_key(self, url: str):
-        return furl(url).add({'api_key': API_KEY})
+        return furl(url).add({'api_key': self.api_key})
 
     def __parse_reports_response(self, response):
         try:
