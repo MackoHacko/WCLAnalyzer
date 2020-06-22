@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 import yaml
 from json.decoder import JSONDecodeError
 from dash.dependencies import Input, Output, State
+from dash import no_update
 from dotenv import load_dotenv, find_dotenv
 
 from client import WCLClient
@@ -102,6 +103,19 @@ def set_update_graph_callback(app):
             Input('classdropdown', 'value'),
             Input('viewdropdown', 'value'),
             Input('encounterdropdown', 'value')
+        ]
+    )
+
+
+def set_clear_filters_callback(app):
+    logger.info("Set callback for clear_filters.")
+    return app.callback(
+        [
+            Output('reportdropdown', 'value'),
+            Output('encounterdropdown', 'value')
+        ],
+        [
+            Input('back', 'n_clicks')
         ]
     )
 
@@ -245,6 +259,15 @@ def update_graph(reports, classes, view, encounter):
         logger.info("Graph updated.")
         return dcc.Graph(id='test', figure=figure)
     return
+
+@set_clear_filters_callback(app)
+def clear_page(n_clicks):
+    trigger = dash.callback_context.triggered[0]['prop_id'].split('.')[0]
+    if trigger == 'back':
+        logger.info("Clearing filters.")
+        return None, None
+    else:
+        return no_update
 
 
 set_app_layout(app)
