@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 import yaml
 from json.decoder import JSONDecodeError
 from dash.dependencies import Input, Output, State
+from dash import no_update
 from dotenv import load_dotenv, find_dotenv
 
 from client import WCLClient
@@ -18,7 +19,7 @@ from utils import average_logs, parse_users, remove_irrelevant_roles
 # Load environment variables
 load_dotenv(find_dotenv())
 
-# Gloval variables
+# Global variables
 with open(r'configs/zone_settings.yaml') as file:
     zones = yaml.load(file, Loader=yaml.FullLoader)
 
@@ -106,6 +107,19 @@ def set_update_graph_callback(app):
     )
 
 
+def set_clear_filters_callback(app):
+    logger.info("Set callback for clear_filters.")
+    return app.callback(
+        [
+            Output('reportdropdown', 'value'),
+            Output('encounterdropdown', 'value')
+        ],
+        [
+            Input('back', 'n_clicks')
+        ]
+    )
+
+
 @set_get_reports_callback(app)
 def get_reports(
     clicks1,
@@ -119,13 +133,12 @@ def get_reports(
     encounters = []
     get_reports_error = False
 
-    ctx = dash.callback_context
-    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    trigger = get_trigger()
 
     form_style = {'display': 'block'}
     select_style = {'display': 'none'}
 
-    if button_id == 'submit-val':
+    if trigger == 'submit-val':
         logger.info("Fetching reports..")
         try:
             reports = client.get_reports(guild, server, region)
@@ -157,7 +170,7 @@ def get_reports(
                     ]
                     break
 
-    elif button_id == 'back':
+    elif trigger == 'back':
         form_style = {'display': 'block'}
         select_style = {'display': 'none'}
         logger.info("Displaying report search form.")
@@ -171,10 +184,9 @@ def get_reports(
 @set_update_graph_callback(app)
 def update_graph(reports, classes, view, encounter):
 
-    trigger = dash.callback_context.triggered[0]['prop_id'].split('.')[0]
     update_triggers = {'reportdropdown', 'classdropdown', 'viewdropdown', 'encounterdropdown'}
 
-    if all([reports, view, trigger in update_triggers]):
+    if all([reports, view, get_trigger() in update_triggers]):
 
         logger.info("Fetching logs..")
         t0 = time.time()
@@ -191,60 +203,78 @@ def update_graph(reports, classes, view, encounter):
                 encounter = encounter
             )
 
-            logs.append(log)
+            if log.get('entries', None):
+                logs.append(log)
 
         t1 = time.time()
         logger.info('Done fetching logs. Took {} s.'.format(t1 - t0))
+        
+        # TODO Inform user that some (or all) logs might be missing in the graph
+        if logs:
 
-        logger.info("Calculating average..")
-        t0 = time.time()
-        df = average_logs(logs)
-        t1 = time.time()
-        logger.info('Done calculating average for logs. Took {} s.'.format(t1 - t0))
+            logger.info("Calculating average..")
+            t0 = time.time()
+            df = average_logs(logs)
+            t1 = time.time()
+            logger.info('Done calculating average for logs. Took {} s.'.format(t1 - t0))
 
-        class_index = [
-            True if class_ in classes else False for class_ in df['_class']
-        ] if classes else [True] * len(df)
+            class_index = [
+                True if class_ in classes else False for class_ in df['_class']
+            ] if classes else [True] * len(df)
 
-        df = df[class_index].pipe(remove_irrelevant_roles)
+            df = df[class_index].pipe(remove_irrelevant_roles)
 
-        colors = [class_settings[class_]['color'] for class_ in df['_class']]
+            colors = [class_settings[class_]['color'] for class_ in df['_class']]
 
-        figure = go.Figure()
-        figure.add_trace(
-            go.Bar(
-                x = df.index,
-                y = df._avg,
-                customdata = df._counts,
-                hovertemplate = "Damage: %{y}<br>Counts: %{customdata}<extra></extra>",
-                marker = dict(color=[color for color in colors]),
-                error_y = dict(
-                    type = 'data',
-                    array = df._std,
-                    thickness = 1.5,
-                    width = 3,
+            figure = go.Figure()
+            figure.add_trace(
+                go.Bar(
+                    x = df.index,
+                    y = df._avg,
+                    customdata = df._counts,
+                    hovertemplate = "Damage: %{y}<br>Counts: %{customdata}<extra></extra>",
+                    marker = dict(color=[color for color in colors]),
+                    error_y = dict(
+                        type = 'data',
+                        array = df._std,
+                        thickness = 1.5,
+                        width = 3,
+                    )
                 )
             )
-        )
 
-        figure.update_layout(
-            template = 'plotly_dark',
-            paper_bgcolor = 'rgba(0, 0, 0, 0)',
-            plot_bgcolor = 'rgba(0, 0, 0, 0)',
-            margin = {'b': 20},
-            bargap = 0.3,
-            hovermode = 'x',
-            autosize = True,
-            title = {
-                'text': f'Percentage of total {view}',
-                'font': {'color': 'white'},
-                'x': 0.5
-            }
-        )
+            figure.update_layout(
+                template = 'plotly_dark',
+                paper_bgcolor = 'rgba(0, 0, 0, 0)',
+                plot_bgcolor = 'rgba(0, 0, 0, 0)',
+                margin = {'b': 20},
+                bargap = 0.3,
+                hovermode = 'x',
+                autosize = True,
+                title = {
+                    'text': f'Percentage of total {view}',
+                    'font': {'color': 'white'},
+                    'x': 0.5
+                }
+            )
 
-        logger.info("Graph updated.")
-        return dcc.Graph(id='test', figure=figure)
+            logger.info("Graph updated.")
+            return dcc.Graph(id='test', figure=figure)
     return
+
+
+@set_clear_filters_callback(app)
+def clear_page(n_clicks):
+    if get_trigger() == 'back':
+        logger.info("Clearing filters.")
+        return None, None
+    else:
+        return no_update
+
+
+def get_trigger():
+    ctx = dash.callback_context
+    return ctx.triggered[0]['prop_id'].split('.')[0]
 
 
 set_app_layout(app)
