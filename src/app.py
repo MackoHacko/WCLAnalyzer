@@ -184,10 +184,9 @@ def get_reports(
 @set_update_graph_callback(app)
 def update_graph(reports, classes, view, encounter):
 
-    trigger = get_trigger()
     update_triggers = {'reportdropdown', 'classdropdown', 'viewdropdown', 'encounterdropdown'}
 
-    if all([reports, view, trigger in update_triggers]):
+    if all([reports, view, get_trigger() in update_triggers]):
 
         logger.info("Fetching logs..")
         t0 = time.time()
@@ -266,8 +265,7 @@ def update_graph(reports, classes, view, encounter):
 
 @set_clear_filters_callback(app)
 def clear_page(n_clicks):
-    trigger = get_trigger()
-    if trigger == 'back':
+    if get_trigger() == 'back':
         logger.info("Clearing filters.")
         return None, None
     else:
