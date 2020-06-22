@@ -133,13 +133,12 @@ def get_reports(
     encounters = []
     get_reports_error = False
 
-    ctx = dash.callback_context
-    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    trigger = get_trigger()
 
     form_style = {'display': 'block'}
     select_style = {'display': 'none'}
 
-    if button_id == 'submit-val':
+    if trigger == 'submit-val':
         logger.info("Fetching reports..")
         try:
             reports = client.get_reports(guild, server, region)
@@ -171,7 +170,7 @@ def get_reports(
                     ]
                     break
 
-    elif button_id == 'back':
+    elif trigger == 'back':
         form_style = {'display': 'block'}
         select_style = {'display': 'none'}
         logger.info("Displaying report search form.")
@@ -185,7 +184,7 @@ def get_reports(
 @set_update_graph_callback(app)
 def update_graph(reports, classes, view, encounter):
 
-    trigger = dash.callback_context.triggered[0]['prop_id'].split('.')[0]
+    trigger = get_trigger()
     update_triggers = {'reportdropdown', 'classdropdown', 'viewdropdown', 'encounterdropdown'}
 
     if all([reports, view, trigger in update_triggers]):
@@ -205,7 +204,7 @@ def update_graph(reports, classes, view, encounter):
                 encounter = encounter
             )
 
-            if log['entries']:
+            if log.get('entries', None):
                 logs.append(log)
 
         t1 = time.time()
@@ -267,12 +266,17 @@ def update_graph(reports, classes, view, encounter):
 
 @set_clear_filters_callback(app)
 def clear_page(n_clicks):
-    trigger = dash.callback_context.triggered[0]['prop_id'].split('.')[0]
+    trigger = get_trigger()
     if trigger == 'back':
         logger.info("Clearing filters.")
         return None, None
     else:
         return no_update
+
+
+def get_trigger():
+    ctx = dash.callback_context
+    return ctx.triggered[0]['prop_id'].split('.')[0]
 
 
 set_app_layout(app)
