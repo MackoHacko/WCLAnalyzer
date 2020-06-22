@@ -205,59 +205,63 @@ def update_graph(reports, classes, view, encounter):
                 encounter = encounter
             )
 
-            logs.append(log)
+            if log['entries']:
+                logs.append(log)
 
         t1 = time.time()
         logger.info('Done fetching logs. Took {} s.'.format(t1 - t0))
+        
+        # TODO Inform user that some (or all) logs might be missing in the graph
+        if logs:
 
-        logger.info("Calculating average..")
-        t0 = time.time()
-        df = average_logs(logs)
-        t1 = time.time()
-        logger.info('Done calculating average for logs. Took {} s.'.format(t1 - t0))
+            logger.info("Calculating average..")
+            t0 = time.time()
+            df = average_logs(logs)
+            t1 = time.time()
+            logger.info('Done calculating average for logs. Took {} s.'.format(t1 - t0))
 
-        class_index = [
-            True if class_ in classes else False for class_ in df['_class']
-        ] if classes else [True] * len(df)
+            class_index = [
+                True if class_ in classes else False for class_ in df['_class']
+            ] if classes else [True] * len(df)
 
-        df = df[class_index].pipe(remove_irrelevant_roles)
+            df = df[class_index].pipe(remove_irrelevant_roles)
 
-        colors = [class_settings[class_]['color'] for class_ in df['_class']]
+            colors = [class_settings[class_]['color'] for class_ in df['_class']]
 
-        figure = go.Figure()
-        figure.add_trace(
-            go.Bar(
-                x = df.index,
-                y = df._avg,
-                customdata = df._counts,
-                hovertemplate = "Damage: %{y}<br>Counts: %{customdata}<extra></extra>",
-                marker = dict(color=[color for color in colors]),
-                error_y = dict(
-                    type = 'data',
-                    array = df._std,
-                    thickness = 1.5,
-                    width = 3,
+            figure = go.Figure()
+            figure.add_trace(
+                go.Bar(
+                    x = df.index,
+                    y = df._avg,
+                    customdata = df._counts,
+                    hovertemplate = "Damage: %{y}<br>Counts: %{customdata}<extra></extra>",
+                    marker = dict(color=[color for color in colors]),
+                    error_y = dict(
+                        type = 'data',
+                        array = df._std,
+                        thickness = 1.5,
+                        width = 3,
+                    )
                 )
             )
-        )
 
-        figure.update_layout(
-            template = 'plotly_dark',
-            paper_bgcolor = 'rgba(0, 0, 0, 0)',
-            plot_bgcolor = 'rgba(0, 0, 0, 0)',
-            margin = {'b': 20},
-            bargap = 0.3,
-            hovermode = 'x',
-            autosize = True,
-            title = {
-                'text': f'Percentage of total {view}',
-                'font': {'color': 'white'},
-                'x': 0.5
-            }
-        )
+            figure.update_layout(
+                template = 'plotly_dark',
+                paper_bgcolor = 'rgba(0, 0, 0, 0)',
+                plot_bgcolor = 'rgba(0, 0, 0, 0)',
+                margin = {'b': 20},
+                bargap = 0.3,
+                hovermode = 'x',
+                autosize = True,
+                title = {
+                    'text': f'Percentage of total {view}',
+                    'font': {'color': 'white'},
+                    'x': 0.5
+                }
+            )
 
-        logger.info("Graph updated.")
-        return dcc.Graph(id='test', figure=figure)
+            logger.info("Graph updated.")
+            return dcc.Graph(id='test', figure=figure)
     return
 
 
