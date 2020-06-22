@@ -43,7 +43,7 @@ def convert_to_unix(date):
 def parse_users(users):
     user_dict = {}
     logger.info(f" Adding authentication for users: {[name for name in users.keys()]}.")
-    for User, user_info in users.items():
+    for user_info in users.values():
         user_dict[user_info["username"]] = user_info["password"]
     return user_dict
 

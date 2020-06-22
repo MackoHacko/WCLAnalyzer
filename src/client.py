@@ -61,7 +61,7 @@ class WCLClient():
             )
             raise e
 
-    def __parse_log_response(self, response, view, encounter):
+    def __parse_log_response(self, response):
         try:
             json_response = response.json()
             if 'error' not in json_response:
@@ -154,6 +154,6 @@ class WCLClient():
             t1 = time.time()
             self.logger.debug('Done API call for fetching logs. Took {} s.'.format(t1 - t0))
 
-            return self.__parse_log_response(response, view, encounter)
+            return self.__parse_log_response(response)
 
         return _get_log(view, log_id, end, encounter)

@@ -19,7 +19,7 @@ from utils import average_logs, parse_users, remove_irrelevant_roles
 # Load environment variables
 load_dotenv(find_dotenv())
 
-# Gloval variables
+# Global variables
 with open(r'configs/zone_settings.yaml') as file:
     zones = yaml.load(file, Loader=yaml.FullLoader)
 
@@ -259,6 +259,7 @@ def update_graph(reports, classes, view, encounter):
         logger.info("Graph updated.")
         return dcc.Graph(id='test', figure=figure)
     return
+
 
 @set_clear_filters_callback(app)
 def clear_page(n_clicks):
