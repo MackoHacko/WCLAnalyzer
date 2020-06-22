@@ -62,7 +62,7 @@ BWL:
       name: Vaelastrasz
 
     - id: 612
-      name: Razorgore
+      name: Broodlord
 
     - id: 613
       name: Firemaw
@@ -79,11 +79,17 @@ BWL:
     - id: 617
       name: Nefarian
 
+    - id: 631
+      name: Ebonroc / Flamegor
+
 ZG:
   id: 1003
   encounters:
     - id: ''
       name: Encounters + Trash
+
+    - id: 0
+      name: Trash
 
     - id: 784
       name: Venoxis
@@ -117,4 +123,66 @@ ZG:
 
     - id: 794
       name: Hakkar (Hard)
-      
+
+AQ20:
+  id: 1004
+  encounters:
+    - id: ''
+      name: Encounters + Trash
+
+    - id: 0
+      name: Trash
+
+    - id: 718
+      name: Kurinnaxx
+
+    - id: 719
+      name: Rajaxx
+
+    - id: 720
+      name: Moam
+
+    - id: 721
+      name: Buru
+
+    - id: 722
+      name: Ayamiss
+
+    - id: 723
+      name: Ossirian
+
+AQ40:
+  id: 1005
+  encounters:
+    - id: ''
+      name: Encounters + Trash
+
+    - id: 0
+      name: Trash
+
+    - id: 709
+      name: Skeram
+
+    - id: 710
+      name: Silithid Royalty
+
+    - id: 711
+      name: Sartura
+
+    - id: 712
+      name: Fankriss
+
+    - id: 713
+      name: Viscidus
+
+    - id: 714
+      name: Huhuran
+
+    - id: 715
+      name: Twin Emperors
+
+    - id: 716
+      name: Ouro
+
+    - id: 717
+      name: C'thun
