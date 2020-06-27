@@ -28,6 +28,7 @@ with open(r'configs/class_settings.yaml') as file:
 
 # Initialize the app
 app = dash.Dash(__name__)
+app.title = "Loganalyzer"
 server = app.server  # needed to launch gunicorn
 app.config.suppress_callback_exceptions = True
 
