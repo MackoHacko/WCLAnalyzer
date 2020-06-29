@@ -1,1 +1,3 @@
-# Log-analyzer_v2
+# WarCraft-Logs Analyzer
+
+A tool that enables averaging multiple warcraft-logs, available online [here](https://loganalyzer.sugarthreat.com/).
